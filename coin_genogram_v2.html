@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a3a5c">
+<title>디지털 동전가계도</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+:root{
+  --navy:#1a3a5c; --navy-mid:#2a5298; --sky:#e8f4fd;
+  --white:#ffffff; --gray-light:#f4f6f9; --gray:#d0d7e0;
+  --gray-dark:#6b7a8d; --text:#1a2332; --text-mid:#4a5568;
+  --radius:16px; --shadow:0 4px 20px rgba(26,58,92,0.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--gray-light);color:var(--text);min-height:100vh;overflow-x:hidden;}
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;}
+
+/* START */
+#screen-start{background:linear-gradient(160deg,var(--navy) 0%,var(--navy-mid) 100%);align-items:center;justify-content:center;text-align:center;padding:80px 24px 40px;position:relative;}
+.start-ci{position:absolute;top:16px;left:16px;background:rgba(255,255,255,0.15);border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;color:rgba(255,255,255,0.9);}
+.start-icon{font-size:72px;margin-bottom:24px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.3));}
+.start-title{font-size:32px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:12px;}
+.start-sub{font-size:15px;color:rgba(255,255,255,0.7);margin-bottom:48px;line-height:1.6;}
+.btn-start{background:#fff;color:var(--navy);border:none;border-radius:50px;padding:20px 56px;font-family:'Noto Sans KR',sans-serif;font-size:20px;font-weight:700;cursor:pointer;box-shadow:0 8px 32px rgba(0,0,0,0.25);}
+.btn-start:active{transform:scale(0.96);}
+
+/* HEADER */
+.page-header{background:var(--navy);padding:16px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
+.btn-back{background:rgba(255,255,255,0.15);border:none;border-radius:10px;padding:10px 14px;color:white;font-size:18px;cursor:pointer;}
+.header-title{font-size:18px;font-weight:700;color:white;}
+.header-step{margin-left:auto;font-size:13px;color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.1);padding:4px 12px;border-radius:20px;}
+
+/* INFO */
+#screen-info .page-content{flex:1;padding:24px 20px;overflow-y:auto;}
+.form-group{margin-bottom:20px;}
+.form-label{font-size:14px;font-weight:700;color:var(--text-mid);margin-bottom:8px;display:block;}
+.form-input{width:100%;padding:16px;border:2px solid var(--gray);border-radius:var(--radius);font-family:'Noto Sans KR',sans-serif;font-size:16px;color:var(--text);background:#fff;}
+.form-input:focus{outline:none;border-color:var(--navy-mid);}
+.radio-group{display:flex;gap:10px;}
+.radio-btn{flex:1;padding:14px;border:2px solid var(--gray);border-radius:var(--radius);text-align:center;font-size:15px;font-weight:700;cursor:pointer;background:#fff;}
+.radio-btn.active{border-color:var(--navy-mid);background:var(--sky);color:var(--navy);}
+.btn-primary{width:100%;background:var(--navy);color:white;border:none;border-radius:var(--radius);padding:18px;font-family:'Noto Sans KR',sans-serif;font-size:18px;font-weight:700;cursor:pointer;}
+.btn-primary:active{opacity:0.85;}
+.bottom-bar{padding:16px 20px 24px;background:#fff;border-top:1px solid var(--gray);}
+
+/* FAMILY */
+#screen-family .page-content{flex:1;padding:20px;overflow-y:auto;}
+.section-label{font-size:13px;font-weight:700;color:var(--gray-dark);letter-spacing:0.5px;margin-bottom:12px;}
+.family-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+.family-checkbox{display:flex;align-items:center;gap:12px;padding:16px;border:2px solid var(--gray);border-radius:var(--radius);cursor:pointer;background:#fff;}
+.family-checkbox.checked{border-color:var(--navy-mid);background:var(--sky);}
+.checkbox-icon{width:28px;height:28px;border-radius:6px;border:2.5px solid var(--gray);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.family-checkbox.checked .checkbox-icon{background:var(--navy-mid);border-color:var(--navy-mid);color:white;}
+.checkbox-label{font-size:16px;font-weight:500;}
+.checkbox-gender{font-size:20px;margin-left:auto;}
+.hint-box{padding:12px 14px;background:var(--sky);border-radius:10px;font-size:13px;color:var(--navy);line-height:1.5;margin-bottom:16px;}
+
+/* ═══════════════════════════════
+   GENOGRAM SCREEN
+═══════════════════════════════ */
+#screen-genogram{background:#ecf0f5;}
+#screen-genogram .geno-body{flex:1;display:flex;overflow:hidden;position:relative;}
+
+/* 왼쪽 동전 패널 */
+.coin-panel{
+  width:82px;min-width:82px;
+  background:var(--navy);
+  display:flex;flex-direction:column;align-items:center;
+  padding:10px 0 12px;gap:0;
+  overflow-y:auto;z-index:10;flex-shrink:0;
+}
+.coin-panel-title{font-size:9px;color:rgba(255,255,255,0.45);font-weight:700;margin-bottom:8px;letter-spacing:0.5px;}
+
+.coin-stack-group{
+  display:flex;flex-direction:column;align-items:center;
+  margin-bottom:14px;width:72px;
+  cursor:grab;user-select:none;-webkit-user-select:none;
+  touch-action:none;
+}
+.coin-stack-group:active{cursor:grabbing;}
+.coin-stack-visual{position:relative;width:52px;height:52px;margin-bottom:4px;}
+.coin-stack-label{font-size:10px;font-weight:700;color:rgba(255,255,255,0.75);}
+
+/* 동전 레이어 (타원형) */
+.cl{
+  position:absolute;left:0;
+  width:52px;height:20px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,0.22);
+  box-shadow:0 2px 4px rgba(0,0,0,0.3);
+}
+.cl-label{
+  position:absolute;left:0;width:52px;
+  text-align:center;font-size:10px;font-weight:900;
+  color:rgba(255,255,255,0.95);z-index:20;
+  text-shadow:0 1px 2px rgba(0,0,0,0.5);
+  pointer-events:none;
+}
+.c500{background:radial-gradient(ellipse at 38% 32%,#f8d070,#c8902a,#7a4c08);}
+.c100{background:radial-gradient(ellipse at 38% 32%,#ececec,#b4b4b4,#787878);}
+.c50 {background:radial-gradient(ellipse at 38% 32%,#f4b860,#cd7f32,#7a3e0a);}
+.c10 {background:radial-gradient(ellipse at 38% 32%,#d8ac44,#9a6a14,#5a3c06);}
+
+/* 드래그 중 floating 동전 */
+.drag-ghost{
+  position:fixed;pointer-events:none;z-index:9999;
+  width:52px;height:20px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:900;color:white;
+  text-shadow:0 1px 2px rgba(0,0,0,0.5);
+  box-shadow:0 8px 24px rgba(0,0,0,0.4);
+  transform:translate(-50%,-50%) scale(1.3);
+  border:1.5px solid rgba(255,255,255,0.3);
+  transition:none;
+}
+
+/* 가계도 영역 */
+.geno-area{flex:1;overflow:auto;position:relative;padding:10px;}
+.geno-canvas{position:relative;background:#fff;border-radius:14px;box-shadow:var(--shadow);overflow:visible;display:inline-block;min-width:280px;}
+#genogram-svg{display:block;overflow:visible;}
+
+/* 노드 위 동전 오버레이 */
+.node-coin-overlay{
+  position:absolute;z-index:20;
+  display:flex;flex-direction:column;
+  align-items:center;pointer-events:none;
+}
+.node-coin-stack{
+  position:relative;
+  pointer-events:all;cursor:grab;
+  touch-action:none;
+  user-select:none;-webkit-user-select:none;
+}
+.node-coin-stack:active{cursor:grabbing;}
+
+/* 드롭 하이라이트 */
+.drop-hl rect.hit-zone, .drop-hl circle.hit-zone{
+  /* 노드 위에 드래그될 때 SVG shape에 glow */
+}
+@keyframes glow{from{filter:brightness(1);}to{filter:brightness(1.25) drop-shadow(0 0 6px #2a5298);}}
+.node-glow{animation:glow 0.45s ease infinite alternate;}
+
+/* 안내 문구 */
+.drag-hint{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  background:rgba(26,58,92,0.82);color:white;font-size:12px;
+  padding:8px 18px;border-radius:20px;pointer-events:none;
+  white-space:nowrap;z-index:40;backdrop-filter:blur(4px);
+  transition:opacity 0.4s;
+}
+
+/* ─── RESULT ─── */
+#screen-result{background:var(--gray-light);}
+#screen-result .page-content{flex:1;overflow-y:auto;padding:20px;}
+.result-capture{background:white;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);}
+.result-title-bar{text-align:center;padding-bottom:16px;border-bottom:2px solid var(--gray);margin-bottom:20px;}
+.result-org{font-size:11px;color:#999;margin-bottom:6px;}
+.result-name{font-size:22px;font-weight:900;}
+.result-meta{font-size:13px;color:var(--gray-dark);margin-top:4px;}
+.result-table{width:100%;border-collapse:collapse;font-size:14px;}
+.result-table th{background:var(--navy);color:white;padding:10px 14px;text-align:left;font-size:13px;}
+.result-table td{padding:10px 14px;border-bottom:1px solid var(--gray);}
+.result-amount{font-weight:700;color:var(--navy-mid);}
+.coin-chips{display:flex;flex-wrap:wrap;gap:4px;}
+.result-chip{padding:3px 8px;border-radius:12px;font-size:12px;font-weight:700;color:white;}
+.rc-500{background:#c8902a;}.rc-100{background:#909090;}.rc-50{background:#cd7f32;}.rc-10{background:#8B6914;}
+.btn-save{width:100%;background:linear-gradient(135deg,var(--navy),var(--navy-mid));color:white;border:none;border-radius:var(--radius);padding:20px;font-family:'Noto Sans KR',sans-serif;font-size:18px;font-weight:700;cursor:pointer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:10px;}
+.btn-restart{width:100%;background:#fff;color:var(--navy);border:2px solid var(--gray);border-radius:var(--radius);padding:16px;font-family:'Noto Sans KR',sans-serif;font-size:16px;font-weight:700;cursor:pointer;margin-top:10px;}
+
+@media(min-width:600px){.family-grid{grid-template-columns:1fr 1fr 1fr;}.coin-panel{width:90px;min-width:90px;}}
+</style>
+</head>
+<body>
+
+<!-- ① START -->
+<div class="screen active" id="screen-start">
+  <div class="start-ci">강원남부 아동보호전문기관</div>
+  <div class="start-icon">🪙</div>
+  <div class="start-title">디지털<br>동전가계도</div>
+  <div class="start-sub">가족과의 관계를 동전으로<br>표현해보세요</div>
+  <button class="btn-start" onclick="goTo('screen-info')">시작하기</button>
+</div>
+
+<!-- ② INFO -->
+<div class="screen" id="screen-info">
+  <div class="page-header">
+    <button class="btn-back" onclick="goTo('screen-start')">←</button>
+    <span class="header-title">기본 정보</span>
+    <span class="header-step">1 / 3</span>
+  </div>
+  <div class="page-content">
+    <div class="form-group"><label class="form-label">아동 이름</label><input class="form-input" id="child-name" type="text" placeholder="이름을 입력하세요"></div>
+    <div class="form-group"><label class="form-label">나이</label><input class="form-input" id="child-age" type="number" placeholder="나이 (숫자)" min="1" max="20"></div>
+    <div class="form-group">
+      <label class="form-label">성별</label>
+      <div class="radio-group">
+        <div class="radio-btn active" id="gender-m" onclick="selectGender('남')">👦 남자</div>
+        <div class="radio-btn" id="gender-f" onclick="selectGender('여')">👧 여자</div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">상담일</label><input class="form-input" id="counsel-date" type="date"></div>
+    <div class="form-group"><label class="form-label">상담사명</label><input class="form-input" id="counselor-name" type="text" placeholder="상담사 이름"></div>
+  </div>
+  <div class="bottom-bar"><button class="btn-primary" onclick="goToFamily()">다음 →</button></div>
+</div>
+
+<!-- ③ FAMILY -->
+<div class="screen" id="screen-family">
+  <div class="page-header">
+    <button class="btn-back" onclick="goTo('screen-info')">←</button>
+    <span class="header-title">가족 구성원 선택</span>
+    <span class="header-step">2 / 3</span>
+  </div>
+  <div class="page-content">
+    <div class="hint-box">함께 사는 가족을 선택해주세요</div>
+    <div class="section-label">부모</div>
+    <div class="family-grid" id="fg-parent"></div>
+    <div class="section-label">형제자매</div>
+    <div class="family-grid" id="fg-sibling"></div>
+    <div class="section-label">조부모</div>
+    <div class="family-grid" id="fg-grand"></div>
+  </div>
+  <div class="bottom-bar"><button class="btn-primary" onclick="buildGenogram()">가계도 생성 →</button></div>
+</div>
+
+<!-- ④ GENOGRAM -->
+<div class="screen" id="screen-genogram">
+  <div class="page-header">
+    <button class="btn-back" onclick="goTo('screen-family')">←</button>
+    <span class="header-title">동전 배치</span>
+    <span class="header-step">3 / 3</span>
+  </div>
+  <div class="geno-body" id="geno-body">
+    <!-- 왼쪽 동전 패널 -->
+    <div class="coin-panel" id="coin-panel">
+      <div class="coin-panel-title">동전</div>
+      <div class="coin-stack-group" id="csg-500" data-val="500" draggable="false">
+        <div class="coin-stack-visual" id="csv-500"></div>
+        <div class="coin-stack-label">500원</div>
+      </div>
+      <div class="coin-stack-group" id="csg-100" data-val="100" draggable="false">
+        <div class="coin-stack-visual" id="csv-100"></div>
+        <div class="coin-stack-label">100원</div>
+      </div>
+      <div class="coin-stack-group" id="csg-50" data-val="50" draggable="false">
+        <div class="coin-stack-visual" id="csv-50"></div>
+        <div class="coin-stack-label">50원</div>
+      </div>
+      <div class="coin-stack-group" id="csg-10" data-val="10" draggable="false">
+        <div class="coin-stack-visual" id="csv-10"></div>
+        <div class="coin-stack-label">10원</div>
+      </div>
+      <div style="margin-top:auto;padding:0 6px;text-align:center;">
+        <div style="font-size:9px;color:rgba(255,255,255,0.35);line-height:1.6;">끌어서<br>가족에게<br>올려두세요</div>
+      </div>
+    </div>
+    <!-- 오른쪽 가계도 -->
+    <div class="geno-area" id="geno-area">
+      <div class="geno-canvas" id="geno-canvas">
+        <svg id="geno-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+        <!-- 동전 오버레이들이 여기 추가됨 -->
+      </div>
+      <div class="drag-hint" id="drag-hint">동전을 끌어서 가족 위에 올려두세요</div>
+    </div>
+  </div>
+  <div class="bottom-bar"><button class="btn-primary" onclick="showResult()">결과 보기 →</button></div>
+</div>
+
+<!-- ⑤ RESULT -->
+<div class="screen" id="screen-result">
+  <div class="page-header">
+    <button class="btn-back" onclick="goTo('screen-genogram')">←</button>
+    <span class="header-title">동전가계도 결과</span>
+  </div>
+  <div class="page-content">
+    <div class="result-capture" id="result-capture">
+      <div class="result-title-bar">
+        <div class="result-org">강원남부 아동보호전문기관</div>
+        <div class="result-name" id="res-child-name"></div>
+        <div class="result-meta" id="res-meta"></div>
+      </div>
+      <div id="res-svg-wrap" style="margin-bottom:16px;overflow-x:auto;"></div>
+      <table class="result-table">
+        <thead><tr><th>가족</th><th>배치 동전</th><th>합계</th></tr></thead>
+        <tbody id="res-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-save" onclick="saveImage()">📷 이미지 저장 (PNG)</button>
+    <button class="btn-restart" onclick="restartAll()">처음부터 다시</button>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let childInfo = {name:'',age:'',gender:'남',date:'',counselor:''};
+let selectedGender = '남';
+let members = [];
+let checkedFamilies = new Set();
+
+const VALS = [500,100,50,10];
+const CGRAD = {
+  500:'radial-gradient(ellipse at 38% 32%,#f8d070,#c8902a,#7a4c08)',
+  100:'radial-gradient(ellipse at 38% 32%,#ececec,#b4b4b4,#787878)',
+   50:'radial-gradient(ellipse at 38% 32%,#f4b860,#cd7f32,#7a3e0a)',
+   10:'radial-gradient(ellipse at 38% 32%,#d8ac44,#9a6a14,#5a3c06)'
+};
+const CCLS = {500:'c500',100:'c100',50:'c50',10:'c10'};
+
+const FAMILY_OPTS = {
+  parent:[{id:'dad',label:'아빠',gender:'M'},{id:'mom',label:'엄마',gender:'F'}],
+  sibling:[
+    {id:'bro1',label:'형',gender:'M'},{id:'sis1',label:'누나',gender:'F'},
+    {id:'bro2',label:'오빠',gender:'M'},{id:'sis2',label:'언니',gender:'F'},
+    {id:'bro3',label:'남동생',gender:'M'},{id:'sis3',label:'여동생',gender:'F'},
+  ],
+  grand:[
+    {id:'gf',label:'할아버지',gender:'M'},{id:'gm',label:'할머니',gender:'F'},
+    {id:'mgf',label:'외할아버지',gender:'M'},{id:'mgm',label:'외할머니',gender:'F'},
+  ]
+};
+
+/* 드래그 상태 */
+let DS = {
+  active:false, val:null,
+  fromId:null,  // null=패널, string=멤버 위 동전
+  ghost:null,
+  overId:null,
+  listenersAdded:false
+};
+
+/* 노드 위치 캐시 (SVG viewBox 좌표) */
+let nodePos = {}; // id -> {cx,cy,top}  (SVG 내부 좌표)
+
+const SQ=40, NGAP=22, VGAP=64;
+
+/* ═══════════════════════════════════════════
+   NAV
+═══════════════════════════════════════════ */
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+/* ═══════════════════════════════════════════
+   INFO
+═══════════════════════════════════════════ */
+function selectGender(g){
+  selectedGender=g;
+  document.getElementById('gender-m').className='radio-btn'+(g==='남'?' active':'');
+  document.getElementById('gender-f').className='radio-btn'+(g==='여'?' active':'');
+}
+function goToFamily(){
+  childInfo.name=document.getElementById('child-name').value.trim()||'아동';
+  childInfo.age=document.getElementById('child-age').value||'';
+  childInfo.gender=selectedGender;
+  childInfo.date=document.getElementById('counsel-date').value||'';
+  childInfo.counselor=document.getElementById('counselor-name').value.trim()||'';
+  renderFamilyOpts();
+  goTo('screen-family');
+}
+
+/* ═══════════════════════════════════════════
+   FAMILY
+═══════════════════════════════════════════ */
+function renderFamilyOpts(){
+  ['parent','sibling','grand'].forEach(g=>{
+    const el=document.getElementById('fg-'+g);
+    el.innerHTML='';
+    FAMILY_OPTS[g].forEach(o=>{
+      const ck=checkedFamilies.has(o.id);
+      el.innerHTML+=`<div class="family-checkbox ${ck?'checked':''}" onclick="toggleFam('${o.id}')">
+        <div class="checkbox-icon">${ck?'✓':''}</div>
+        <span class="checkbox-label">${o.label}</span>
+        <span class="checkbox-gender">${o.gender==='M'?'♂':'♀'}</span>
+      </div>`;
+    });
+  });
+}
+function toggleFam(id){
+  if(checkedFamilies.has(id)) checkedFamilies.delete(id);
+  else checkedFamilies.add(id);
+  renderFamilyOpts();
+}
+
+/* ═══════════════════════════════════════════
+   BUILD GENOGRAM
+═══════════════════════════════════════════ */
+function buildGenogram(){
+  members=[];
+  members.push({id:'self',label:childInfo.name,gender:childInfo.gender==='남'?'M':'F',coins:[],isSelf:true});
+  [...FAMILY_OPTS.parent,...FAMILY_OPTS.sibling,...FAMILY_OPTS.grand].forEach(o=>{
+    if(checkedFamilies.has(o.id)) members.push({id:o.id,label:o.label,gender:o.gender,coins:[]});
+  });
+  goTo('screen-genogram');
+  setTimeout(()=>{
+    buildPanelStacks();
+    renderGenogram();
+    if(!DS.listenersAdded){ setupGlobalListeners(); DS.listenersAdded=true; }
+    setupPanelListeners();
+  },60);
+}
+
+/* ─── 왼쪽 패널 동전 스택 시각 ─── */
+function buildPanelStacks(){
+  VALS.forEach(v=>{
+    const vis=document.getElementById('csv-'+v);
+    vis.innerHTML='';
+    const N=5, stepY=6, coinH=20;
+    const totalH=coinH+(N-1)*stepY;
+    vis.style.height=totalH+'px';
+    for(let i=0;i<N;i++){
+      const d=document.createElement('div');
+      d.className='cl '+CCLS[v];
+      d.style.top=((N-1-i)*stepY)+'px';
+      d.style.zIndex=i;
+      vis.appendChild(d);
+    }
+    const lbl=document.createElement('div');
+    lbl.className='cl-label';
+    lbl.style.top=(((N-1)*stepY)+(coinH/2)-7)+'px'; // 맨 위 동전 중앙
+    lbl.textContent=v;
+    vis.appendChild(lbl);
+  });
+}
+
+/* ═══════════════════════════════════════════
+   GENOGRAM SVG RENDER
+═══════════════════════════════════════════ */
+function renderGenogram(){
+  removeAllOverlays();
+  const svg=document.getElementById('geno-svg');
+
+  const gpat=members.filter(m=>['gf','gm'].includes(m.id));
+  const gmat=members.filter(m=>['mgf','mgm'].includes(m.id));
+  const dadM=members.find(m=>m.id==='dad');
+  const momM=members.find(m=>m.id==='mom');
+  const allP=[dadM,momM].filter(Boolean);
+  const SBEF=['bro1','sis1','bro2','sis2'];
+  const SAFT=['bro3','sis3'];
+  const siblB=members.filter(m=>SBEF.includes(m.id)).sort((a,b)=>SBEF.indexOf(a.id)-SBEF.indexOf(b.id));
+  const siblA=members.filter(m=>SAFT.includes(m.id)).sort((a,b)=>SAFT.indexOf(a.id)-SAFT.indexOf(b.id));
+  const selfM=members.find(m=>m.id==='self');
+  const childRow=[...siblB,selfM,...siblA].filter(Boolean);
+
+  const cRowY=232, pRowY=144, gRowY=52;
+  const NODE_W=SQ+NGAP;
+  const svgW=Math.max(childRow.length*NODE_W+40, allP.length*NODE_W*2+40, 300);
+  const svgH=cRowY+SQ+44;
+
+  const pos={};
+  // 자녀 행
+  const cStart=(svgW-childRow.length*NODE_W+NGAP)/2;
+  childRow.forEach((m,i)=>{
+    const cx=cStart+i*NODE_W+SQ/2;
+    pos[m.id]={cx,cy:cRowY+SQ/2,top:cRowY};
+  });
+  // 부모 행
+  if(allP.length===2 && pos['self']){
+    const mid=pos['self'].cx;
+    pos['dad']={cx:mid-SQ/2-14,cy:pRowY+SQ/2,top:pRowY};
+    pos['mom']={cx:mid+SQ/2+14,cy:pRowY+SQ/2,top:pRowY};
+  } else if(dadM){pos['dad']={cx:svgW/2,cy:pRowY+SQ/2,top:pRowY};}
+    else if(momM){pos['mom']={cx:svgW/2,cy:pRowY+SQ/2,top:pRowY};}
+  // 친조부모
+  if(gpat.length>0){
+    const dc=pos['dad']?pos['dad'].cx:svgW*0.28;
+    if(gpat.length===2){pos['gf']={cx:dc-SQ/2-10,cy:gRowY+SQ/2,top:gRowY};pos['gm']={cx:dc+SQ/2+10,cy:gRowY+SQ/2,top:gRowY};}
+    else pos[gpat[0].id]={cx:dc,cy:gRowY+SQ/2,top:gRowY};
+  }
+  // 외조부모
+  if(gmat.length>0){
+    const mc=pos['mom']?pos['mom'].cx:svgW*0.72;
+    if(gmat.length===2){pos['mgf']={cx:mc-SQ/2-10,cy:gRowY+SQ/2,top:gRowY};pos['mgm']={cx:mc+SQ/2+10,cy:gRowY+SQ/2,top:gRowY};}
+    else pos[gmat[0].id]={cx:mc,cy:gRowY+SQ/2,top:gRowY};
+  }
+
+  // 선
+  let L='';
+  const line=(x1,y1,x2,y2,c='#a0aec0',w=2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}"/>`;
+  if(gpat.length===2&&pos.gf&&pos.gm&&pos.dad){
+    const mx=(pos.gf.cx+pos.gm.cx)/2;
+    L+=line(pos.gf.cx+SQ/2,pos.gf.cy,pos.gm.cx-SQ/2,pos.gm.cy);
+    L+=line(mx,pos.gf.cy,pos.dad.cx,pos.dad.top);
+  }else if(gpat.length===1&&pos[gpat[0].id]&&pos.dad){
+    const g=pos[gpat[0].id];L+=line(g.cx,g.top+SQ,pos.dad.cx,pos.dad.top);
+  }
+  if(gmat.length===2&&pos.mgf&&pos.mgm&&pos.mom){
+    const mx=(pos.mgf.cx+pos.mgm.cx)/2;
+    L+=line(pos.mgf.cx+SQ/2,pos.mgf.cy,pos.mgm.cx-SQ/2,pos.mgm.cy);
+    L+=line(mx,pos.mgf.cy,pos.mom.cx,pos.mom.top);
+  }else if(gmat.length===1&&pos[gmat[0].id]&&pos.mom){
+    const g=pos[gmat[0].id];L+=line(g.cx,g.top+SQ,pos.mom.cx,pos.mom.top);
+  }
+  if(pos.dad&&pos.mom) L+=line(pos.dad.cx+SQ/2,pos.dad.cy,pos.mom.cx-SQ/2,pos.mom.cy,'#6b7a8d',2.5);
+  const pAnchor=pos.dad&&pos.mom?(pos.dad.cx+pos.mom.cx)/2:pos.dad?pos.dad.cx:pos.mom?pos.mom.cx:null;
+  if(pAnchor&&childRow.length>0){
+    const pBot=pRowY+SQ, midY=(pBot+cRowY)/2;
+    const fc=pos[childRow[0].id].cx, lc=pos[childRow[childRow.length-1].id].cx;
+    L+=line(pAnchor,pBot,pAnchor,midY,'#6b7a8d',2.5);
+    L+=line(fc,midY,lc,midY,'#6b7a8d',2.5);
+    childRow.forEach(m=>{const cx=pos[m.id].cx;L+=line(cx,midY,cx,cRowY,'#6b7a8d',2.5);});
+    const mx=(fc+lc)/2;if(Math.abs(mx-pAnchor)>4)L+=line(pAnchor,midY,mx,midY,'#6b7a8d',2.5);
+  }
+
+  // 노드
+  let N='';
+  members.forEach(m=>{
+    const p=pos[m.id];if(!p)return;
+    const sc=m.isSelf?'#d97706':m.gender==='M'?'#2a5298':'#9d174d';
+    const fc=m.isSelf?'#fef3c7':m.gender==='M'?'#dbeafe':'#fce7f3';
+    const tot=(m.coins||[]).reduce((s,c)=>s+c,0);
+    // 셰이프
+    if(m.gender==='M'){
+      N+=`<rect id="sh-${m.id}" x="${p.cx-SQ/2}" y="${p.top}" width="${SQ}" height="${SQ}" rx="6" fill="${fc}" stroke="${sc}" stroke-width="2.5"/>`;
+      if(m.isSelf) N+=`<rect x="${p.cx-SQ/2+5}" y="${p.top+5}" width="${SQ-10}" height="${SQ-10}" rx="3" fill="none" stroke="${sc}" stroke-width="1.5"/>`;
+    }else{
+      N+=`<circle id="sh-${m.id}" cx="${p.cx}" cy="${p.top+SQ/2}" r="${SQ/2}" fill="${fc}" stroke="${sc}" stroke-width="2.5"/>`;
+      if(m.isSelf) N+=`<circle cx="${p.cx}" cy="${p.top+SQ/2}" r="${SQ/2-5}" fill="none" stroke="${sc}" stroke-width="1.5"/>`;
+    }
+    // 이름
+    N+=`<text x="${p.cx}" y="${p.top+SQ+15}" text-anchor="middle" font-size="11.5" font-weight="700" font-family="Noto Sans KR,sans-serif" fill="${sc}">${m.label}</text>`;
+    // 합계
+    if(tot>0) N+=`<text x="${p.cx}" y="${p.top+SQ+29}" text-anchor="middle" font-size="10.5" font-family="Noto Sans KR,sans-serif" fill="#2a5298" font-weight="700">${tot.toLocaleString()}원</text>`;
+    // 히트 영역 (넉넉하게)
+    N+=`<rect id="hit-${m.id}" x="${p.cx-SQ/2-10}" y="${p.top-10}" width="${SQ+20}" height="${SQ+20}" fill="transparent" rx="10"/>`;
+  });
+
+  svg.setAttribute('viewBox',`0 0 ${svgW} ${svgH}`);
+  svg.style.width=svgW+'px';
+  svg.style.height=svgH+'px';
+  svg.innerHTML=L+N;
+
+  // 위치 캐시
+  nodePos={};
+  members.forEach(m=>{if(pos[m.id]) nodePos[m.id]={...pos[m.id]};});
+
+  // 동전 오버레이
+  placeAllCoinOverlays();
+  updateDragHint();
+}
+
+/* ═══════════════════════════════════════════
+   COIN OVERLAYS
+   각 멤버의 동전을 노드 좌상단에 쌓아서 표시
+═══════════════════════════════════════════ */
+function removeAllOverlays(){
+  document.querySelectorAll('.node-coin-overlay').forEach(e=>e.remove());
+}
+
+function placeAllCoinOverlays(){
+  removeAllOverlays();
+  const svg=document.getElementById('geno-svg');
+  const canvas=document.getElementById('geno-canvas');
+  const svgRect=svg.getBoundingClientRect();
+  const canRect=canvas.getBoundingClientRect();
+  const vb=svg.viewBox.baseVal;
+  if(!vb||vb.width===0) return;
+  const sx=svgRect.width/vb.width;
+  const sy=svgRect.height/vb.height;
+
+  members.forEach(m=>{
+    const p=nodePos[m.id];
+    if(!p||!m.coins||m.coins.length===0) return;
+    // 노드 좌상단 픽셀 위치 (canvas 기준)
+    const npx=svgRect.left-canRect.left+(p.cx-SQ/2)*sx;
+    const npy=svgRect.top-canRect.top+p.top*sy;
+    createCoinOverlay(m, npx, npy, canvas);
+  });
+}
+
+function createCoinOverlay(m, npx, npy, canvas){
+  // 동전 종류별 개수
+  const counts={};
+  m.coins.forEach(v=>{counts[v]=(counts[v]||0)+1;});
+
+  // 오버레이 컨테이너: 노드 좌상단에서 약간 왼쪽/위로
+  const wrap=document.createElement('div');
+  wrap.className='node-coin-overlay';
+  wrap.id='ov-'+m.id;
+  wrap.style.cssText=`left:${npx-26}px;top:${npy-10}px;`;
+
+  // 각 동전 종류를 아래에서 위로 쌓기
+  VALS.forEach(v=>{
+    if(!counts[v]) return;
+    const cnt=counts[v];
+    const coinH=16, step=5;
+    const stackH=coinH+(cnt-1)*step+8;
+
+    const sg=document.createElement('div');
+    sg.className='node-coin-stack';
+    sg.setAttribute('data-src-id',m.id);
+    sg.setAttribute('data-src-val',v);
+    sg.style.cssText=`width:44px;height:${stackH}px;margin-bottom:3px;`;
+
+    // 동전 레이어 (아래→위)
+    const show=Math.min(cnt,10);
+    for(let i=0;i<show;i++){
+      const d=document.createElement('div');
+      d.style.cssText=`position:absolute;width:44px;height:${coinH}px;border-radius:50%;
+        background:${CGRAD[v]};border:1.5px solid rgba(255,255,255,0.25);
+        top:${(show-1-i)*step}px;z-index:${i};box-shadow:0 1px 3px rgba(0,0,0,0.28);`;
+      sg.appendChild(d);
+    }
+    // 개수 뱃지
+    const badge=document.createElement('div');
+    badge.style.cssText=`position:absolute;top:-5px;right:-3px;
+      background:var(--navy);color:white;font-size:8.5px;font-weight:900;
+      border-radius:50%;width:15px;height:15px;
+      display:flex;align-items:center;justify-content:center;
+      z-index:30;border:1.5px solid white;`;
+    badge.textContent=cnt>99?'99+':cnt;
+    sg.appendChild(badge);
+
+    // 금액 표시
+    const lbl=document.createElement('div');
+    lbl.style.cssText=`position:absolute;left:0;width:44px;text-align:center;
+      font-size:9px;font-weight:900;color:rgba(255,255,255,0.9);
+      top:${(show-1)*step+(coinH/2)-5}px;z-index:25;
+      text-shadow:0 1px 2px rgba(0,0,0,0.5);pointer-events:none;`;
+    lbl.textContent=v;
+    sg.appendChild(lbl);
+
+    // 드래그 이벤트
+    sg.addEventListener('mousedown', e=>{e.stopPropagation();startFromOverlay(e,m.id,v);});
+    sg.addEventListener('touchstart',e=>{e.stopPropagation();startFromOverlay(e,m.id,v);},{passive:false});
+
+    wrap.appendChild(sg);
+  });
+  canvas.appendChild(wrap);
+}
+
+/* ═══════════════════════════════════════════
+   DRAG & DROP
+═══════════════════════════════════════════ */
+function setupGlobalListeners(){
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup',   onEnd);
+  document.addEventListener('touchmove', onMove,{passive:false});
+  document.addEventListener('touchend',  onEnd,{passive:false});
+}
+
+function setupPanelListeners(){
+  VALS.forEach(v=>{
+    const el=document.getElementById('csg-'+v);
+    if(!el) return;
+    el.onmousedown=e=>{e.preventDefault();startFromPanel(e,v);};
+    el.ontouchstart=e=>{e.preventDefault();startFromPanel(e,v);};
+  });
+}
+
+function startFromPanel(e,v){
+  const pt=getXY(e);
+  makeGhost(v,pt);
+  DS={...DS, active:true, val:v, fromId:null, overId:null};
+}
+
+function startFromOverlay(e,memberId,v){
+  e.preventDefault();
+  const pt=getXY(e);
+  makeGhost(v,pt);
+  // 일단 멤버에서 동전 하나 빼기
+  const m=members.find(x=>x.id===memberId);
+  if(!m) return;
+  const idx=m.coins.lastIndexOf(v);
+  if(idx===-1) return;
+  m.coins.splice(idx,1);
+  DS={...DS, active:true, val:v, fromId:memberId, overId:null};
+  // 오버레이 즉시 업데이트
+  placeAllCoinOverlays();
+  bindOverlayEvents();
+}
+
+function makeGhost(v,pt){
+  if(DS.ghost){DS.ghost.remove();DS.ghost=null;}
+  const g=document.createElement('div');
+  g.className='drag-ghost '+CCLS[v];
+  g.textContent=v;
+  g.style.left=pt.x+'px';
+  g.style.top=pt.y+'px';
+  document.body.appendChild(g);
+  DS.ghost=g;
+}
+
+function onMove(e){
+  if(!DS.active) return;
+  e.preventDefault();
+  const pt=getXY(e);
+  if(DS.ghost){DS.ghost.style.left=pt.x+'px';DS.ghost.style.top=pt.y+'px';}
+  // 어느 노드 위에 있나
+  const ov=findNodeAt(pt.x,pt.y);
+  if(ov!==DS.overId){
+    if(DS.overId){const s=document.getElementById('sh-'+DS.overId);if(s) s.classList.remove('node-glow');}
+    DS.overId=ov;
+    if(ov){const s=document.getElementById('sh-'+ov);if(s) s.classList.add('node-glow');}
+  }
+}
+
+function onEnd(e){
+  if(!DS.active) return;
+  e.preventDefault();
+  DS.active=false;
+  if(DS.overId){const s=document.getElementById('sh-'+DS.overId);if(s) s.classList.remove('node-glow');}
+  if(DS.ghost){DS.ghost.remove();DS.ghost=null;}
+
+  const tgt=DS.overId;
+  if(tgt){
+    // 대상 멤버에 동전 추가
+    const m=members.find(x=>x.id===tgt);
+    if(m) m.coins.push(DS.val);
+  } else {
+    // 드롭 취소 → 출처로 반환
+    if(DS.fromId){
+      const m=members.find(x=>x.id===DS.fromId);
+      if(m) m.coins.push(DS.val);
+    }
+    // 패널에서 꺼낸 경우 버림 (패널은 무한)
+  }
+
+  DS.fromId=null; DS.overId=null;
+  // SVG 재렌더 (합계 업데이트)
+  renderGenogram();
+}
+
+/* ─── 헬퍼 ─── */
+function getXY(e){
+  if(e.touches&&e.touches[0]) return{x:e.touches[0].clientX,y:e.touches[0].clientY};
+  if(e.changedTouches&&e.changedTouches[0]) return{x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY};
+  return{x:e.clientX,y:e.clientY};
+}
+
+function findNodeAt(px,py){
+  const svg=document.getElementById('geno-svg');
+  const r=svg.getBoundingClientRect();
+  const vb=svg.viewBox.baseVal;
+  if(!vb||vb.width===0) return null;
+  const sx=r.width/vb.width, sy=r.height/vb.height;
+  for(const [id,p] of Object.entries(nodePos)){
+    const cx=r.left+p.cx*sx, cy=r.top+p.cy*sy;
+    const rad=(SQ/2+14)*Math.min(sx,sy);
+    if((px-cx)**2+(py-cy)**2<rad**2) return id;
+  }
+  return null;
+}
+
+function bindOverlayEvents(){
+  document.querySelectorAll('.node-coin-stack').forEach(el=>{
+    el.onmousedown=e=>{e.stopPropagation();startFromOverlay(e,el.dataset.srcId,parseInt(el.dataset.srcVal));};
+    el.ontouchstart=e=>{e.stopPropagation();startFromOverlay(e,el.dataset.srcId,parseInt(el.dataset.srcVal));};
+  });
+}
+
+function updateDragHint(){
+  const any=members.some(m=>m.coins&&m.coins.length>0);
+  const h=document.getElementById('drag-hint');
+  if(h) h.style.opacity=any?'0':'1';
+}
+
+/* ═══════════════════════════════════════════
+   RESULT
+═══════════════════════════════════════════ */
+function showResult(){
+  const svg=document.getElementById('geno-svg');
+  document.getElementById('res-svg-wrap').innerHTML=
+    `<div style="background:white;padding:8px;border-radius:8px;overflow-x:auto;">${svg.outerHTML}</div>`;
+  document.getElementById('res-child-name').textContent=
+    `${childInfo.name} (${childInfo.gender==='남'?'남':'여'}, ${childInfo.age}세)`;
+  const d=childInfo.date?childInfo.date.replace(/-/g,'.'):'';
+  document.getElementById('res-meta').textContent=`상담일: ${d}　상담사: ${childInfo.counselor}`;
+  const tbody=document.getElementById('res-tbody');
+  tbody.innerHTML='';
+  const placed=members.filter(m=>m.coins&&m.coins.length>0);
+  if(placed.length===0){
+    tbody.innerHTML='<tr><td colspan="3" style="text-align:center;color:#999;padding:20px;">배치된 동전이 없어요</td></tr>';
+  } else {
+    placed.forEach(m=>{
+      const tot=m.coins.reduce((s,c)=>s+c,0);
+      const chips=m.coins.map(c=>`<span class="result-chip rc-${c}">${c}</span>`).join('');
+      tbody.innerHTML+=`<tr><td><b>${m.label}</b></td><td><div class="coin-chips">${chips}</div></td><td class="result-amount">${tot.toLocaleString()}원</td></tr>`;
+    });
+  }
+  goTo('screen-result');
+}
+
+/* ═══════════════════════════════════════════
+   SAVE IMAGE
+═══════════════════════════════════════════ */
+function b64ToBlob(d){
+  const a=d.split(','),mt=a[0].match(/:(.*?);/)[1],bs=atob(a[1]);
+  let n=bs.length;const u=new Uint8Array(n);while(n--)u[n]=bs.charCodeAt(n);
+  return new Blob([u],{type:mt});
+}
+function ldScript(src){return new Promise((r,j)=>{const s=document.createElement('script');s.src=src;s.onload=r;s.onerror=j;document.head.appendChild(s);});}
+async function saveImage(){
+  const t=document.getElementById('result-capture');
+  const b=document.querySelector('.btn-save');
+  const orig=b.innerHTML; b.innerHTML='⏳ 생성 중...'; b.disabled=true;
+  try{
+    if(typeof htmlToImage==='undefined') await ldScript('https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js');
+    const ua=navigator.userAgent||'';
+    const isIOS=/iPhone|iPad|iPod/i.test(ua);
+    const fn=`동전가계도_${childInfo.name}_${childInfo.date||'결과'}.png`;
+    const du=await htmlToImage.toPng(t,{backgroundColor:'#ffffff',pixelRatio:2,cacheBust:true});
+    if(isIOS){
+      const bl=b64ToBlob(du), fl=new File([bl],fn,{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[fl]})){await navigator.share({files:[fl],title:'동전가계도'});}
+      else{const w=window.open();if(w)w.document.write(`<html><body style="margin:0;background:#111;display:flex;flex-direction:column;align-items:center;padding:16px;"><p style="color:white;font-size:14px;margin-bottom:12px;">이미지를 <b>길게 눌러</b> 저장하세요</p><img src="${du}" style="max-width:100%;border-radius:8px;"></body></html>`);
+      else alert('스크린샷으로 저장해주세요.');}
+    }else{
+      const bl=b64ToBlob(du),url=URL.createObjectURL(bl),a=document.createElement('a');
+      a.href=url;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),3000);
+    }
+  }catch(e){console.error(e);alert('이미지 저장 중 오류가 발생했어요. 스크린샷으로 저장해주세요.');}
+  finally{b.innerHTML=orig;b.disabled=false;}
+}
+
+function restartAll(){
+  checkedFamilies.clear();members=[];
+  childInfo={name:'',age:'',gender:'남',date:'',counselor:''};
+  selectedGender='남';
+  ['child-name','child-age','counselor-name'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  selectGender('남');
+  DS.listenersAdded=false;
+  goTo('screen-start');
+}
+
+/* INIT */
+document.getElementById('counsel-date').value=new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>
