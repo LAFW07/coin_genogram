@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a3a5c">
+<title>디지털 동전가계도 – 강원남부 아동보호전문기관</title>
+<style>
+:root{
+  --navy:#1a3a5c;--navy-mid:#2a5298;--sky:#e8f4fd;
+  --white:#fff;--gl:#f4f6f9;--gray:#d0d7e0;--gd:#6b7a8d;
+  --text:#1a2332;--tm:#4a5568;
+  --r:16px;--sh:0 4px 20px rgba(26,58,92,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+  background:var(--gl);color:var(--text);min-height:100vh;overflow-x:hidden;}
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;}
+
+/* ── START ── */
+#s0{background:linear-gradient(160deg,var(--navy) 0%,var(--navy-mid) 100%);
+  align-items:center;justify-content:center;text-align:center;padding:80px 24px 40px;position:relative;}
+.s0-org{position:absolute;top:16px;left:16px;background:rgba(255,255,255,.15);border-radius:10px;
+  padding:6px 12px;font-size:11px;font-weight:700;color:rgba(255,255,255,.9);}
+.s0-ico{font-size:72px;margin-bottom:24px;}
+.s0-ttl{font-size:32px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:12px;}
+.s0-sub{font-size:15px;color:rgba(255,255,255,.7);margin-bottom:48px;line-height:1.6;}
+.btn-start{background:#fff;color:var(--navy);border:none;border-radius:50px;padding:20px 56px;
+  font-size:20px;font-weight:700;cursor:pointer;box-shadow:0 8px 32px rgba(0,0,0,.25);}
+.btn-start:active{transform:scale(.96);}
+
+/* ── HEADER ── */
+.hdr{background:var(--navy);padding:14px 16px;display:flex;align-items:center;gap:10px;
+  position:sticky;top:0;z-index:200;}
+.btn-back{background:rgba(255,255,255,.15);border:none;border-radius:10px;padding:9px 14px;
+  color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;}
+.hdr-title{font-size:17px;font-weight:700;color:#fff;}
+.hdr-step{margin-left:auto;font-size:12px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.1);
+  padding:4px 12px;border-radius:20px;white-space:nowrap;}
+
+/* ── FORMS ── */
+.pg-content{flex:1;padding:20px;overflow-y:auto;}
+.fg{margin-bottom:20px;}
+.fl{font-size:14px;font-weight:700;color:var(--tm);margin-bottom:8px;display:block;}
+.fi{width:100%;padding:14px 16px;border:2px solid var(--gray);border-radius:var(--r);
+  font-size:16px;color:var(--text);background:#fff;}
+.fi:focus{outline:none;border-color:var(--navy-mid);}
+.rg{display:flex;gap:10px;}
+.rb{flex:1;padding:14px;border:2px solid var(--gray);border-radius:var(--r);
+  text-align:center;font-size:15px;font-weight:700;cursor:pointer;background:#fff;}
+.rb.on{border-color:var(--navy-mid);background:var(--sky);color:var(--navy);}
+.btn-p{width:100%;background:var(--navy);color:#fff;border:none;border-radius:var(--r);
+  padding:18px;font-size:18px;font-weight:700;cursor:pointer;}
+.btn-p:active{opacity:.85;}
+.btmbar{padding:14px 20px 22px;background:#fff;border-top:1px solid var(--gray);display:flex;gap:10px;}
+.btn-sec{flex:1;background:#fff;color:var(--navy);border:2px solid var(--gray);border-radius:var(--r);
+  padding:16px;font-size:16px;font-weight:700;cursor:pointer;}
+
+/* ── FAMILY ── */
+.sec-lbl{font-size:12px;font-weight:700;color:var(--gd);letter-spacing:.5px;margin-bottom:10px;
+  display:flex;align-items:center;justify-content:space-between;}
+.family-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.fam-cb{display:flex;align-items:center;gap:10px;padding:14px;border:2px solid var(--gray);
+  border-radius:var(--r);cursor:pointer;background:#fff;transition:all .15s;}
+.fam-cb.on{border-color:var(--navy-mid);background:var(--sky);}
+.cb-ico{width:26px;height:26px;border-radius:6px;border:2.5px solid var(--gray);display:flex;
+  align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.fam-cb.on .cb-ico{background:var(--navy-mid);border-color:var(--navy-mid);color:#fff;}
+.cb-lbl{font-size:15px;font-weight:500;flex:1;}
+.cb-gen{font-size:18px;}
+.hint{padding:12px 14px;background:var(--sky);border-radius:10px;font-size:13px;
+  color:var(--navy);line-height:1.5;margin-bottom:16px;}
+/* 형제자매 추가/삭제 버튼 */
+.add-sibl-btn{background:var(--sky);border:2px dashed var(--navy-mid);border-radius:var(--r);
+  padding:12px;text-align:center;cursor:pointer;color:var(--navy-mid);font-size:14px;font-weight:700;
+  margin-bottom:20px;width:100%;}
+.add-sibl-btn:hover{background:#d0e8f8;}
+
+/* ═══════════════════════════════
+   GENOGRAM
+═══════════════════════════════ */
+#s3{background:#ecf0f5;}
+#s3 .gbody{flex:1;display:flex;overflow:hidden;position:relative;}
+
+/* 동전 패널 */
+.cpanel{width:80px;min-width:80px;background:var(--navy);display:flex;flex-direction:column;
+  align-items:center;padding:10px 0 10px;overflow-y:auto;z-index:10;flex-shrink:0;}
+.cp-ttl{font-size:9px;color:rgba(255,255,255,.4);font-weight:700;margin-bottom:10px;letter-spacing:.5px;}
+.csg{display:flex;flex-direction:column;align-items:center;margin-bottom:14px;width:68px;
+  cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;}
+.csg:active{cursor:grabbing;}
+.csv{position:relative;width:50px;margin-bottom:4px;}
+.csl{font-size:10px;font-weight:700;color:rgba(255,255,255,.75);}
+.cl{position:absolute;left:0;width:50px;height:19px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.22);box-shadow:0 2px 4px rgba(0,0,0,.3);}
+.cl-lbl{position:absolute;left:0;width:50px;text-align:center;font-size:9px;font-weight:900;
+  color:rgba(255,255,255,.95);z-index:20;text-shadow:0 1px 2px rgba(0,0,0,.5);pointer-events:none;}
+.c500{background:radial-gradient(ellipse at 38% 32%,#f8d070,#c8902a,#7a4c08);}
+.c100{background:radial-gradient(ellipse at 38% 32%,#ececec,#b4b4b4,#787878);}
+.c50 {background:radial-gradient(ellipse at 38% 32%,#f4b860,#cd7f32,#7a3e0a);}
+.c10 {background:radial-gradient(ellipse at 38% 32%,#d8ac44,#9a6a14,#5a3c06);}
+.cp-hint{margin-top:auto;padding:0 6px;text-align:center;
+  font-size:9px;color:rgba(255,255,255,.3);line-height:1.6;}
+
+/* 드래그 고스트 */
+.drag-ghost{position:fixed;pointer-events:none;z-index:9999;
+  width:50px;height:19px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:900;color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.5);
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+  transform:translate(-50%,-50%) scale(1.35);
+  border:1.5px solid rgba(255,255,255,.3);}
+
+/* 가계도 영역 */
+.garea{flex:1;overflow:auto;position:relative;padding:10px;}
+.gcanvas{position:relative;background:#fff;border-radius:14px;
+  box-shadow:var(--sh);display:inline-block;min-width:280px;}
+#gsvg{display:block;overflow:visible;}
+
+/* 노드 위 동전 오버레이 */
+.ncov{position:absolute;z-index:20;display:flex;flex-direction:column;
+  align-items:center;pointer-events:none;}
+.ncstack{position:relative;pointer-events:all;cursor:grab;
+  touch-action:none;user-select:none;-webkit-user-select:none;}
+.ncstack:active{cursor:grabbing;}
+
+@keyframes glow{from{filter:brightness(1);}to{filter:brightness(1.3) drop-shadow(0 0 7px #2a5298);}}
+.node-glow{animation:glow .4s ease infinite alternate;}
+
+.drag-hint-lbl{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+  background:rgba(26,58,92,.82);color:#fff;font-size:12px;
+  padding:8px 18px;border-radius:20px;pointer-events:none;
+  white-space:nowrap;z-index:40;transition:opacity .4s;}
+
+/* ── RESULT ── */
+#s4{background:var(--gl);}
+.rcap{background:#fff;border-radius:var(--r);padding:22px;box-shadow:var(--sh);}
+.rtbar{text-align:center;padding-bottom:14px;border-bottom:2px solid var(--gray);margin-bottom:18px;}
+.rorg{font-size:11px;color:#999;margin-bottom:4px;}
+.rname{font-size:20px;font-weight:900;}
+.rmeta{font-size:13px;color:var(--gd);margin-top:4px;}
+.rtbl{width:100%;border-collapse:collapse;font-size:14px;}
+.rtbl th{background:var(--navy);color:#fff;padding:10px 12px;text-align:left;font-size:12px;}
+.rtbl td{padding:10px 12px;border-bottom:1px solid var(--gray);}
+.ra{font-weight:700;color:var(--navy-mid);}
+.chips{display:flex;flex-wrap:wrap;gap:4px;}
+.chip{padding:3px 7px;border-radius:12px;font-size:11px;font-weight:700;color:#fff;}
+.r500{background:#c8902a;}.r100{background:#909090;}.r50{background:#cd7f32;}.r10{background:#8B6914;}
+.btn-save{width:100%;background:linear-gradient(135deg,var(--navy),var(--navy-mid));color:#fff;
+  border:none;border-radius:var(--r);padding:18px;font-size:17px;font-weight:700;cursor:pointer;
+  margin-top:8px;display:flex;align-items:center;justify-content:center;gap:10px;}
+.btn-edit{width:100%;background:#fff;color:var(--navy);border:2px solid var(--gray);
+  border-radius:var(--r);padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;}
+.btn-restart{width:100%;background:#fff;color:#e53e3e;border:2px solid #fed7d7;
+  border-radius:var(--r);padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;}
+
+@media(min-width:600px){.family-grid{grid-template-columns:1fr 1fr 1fr;}.cpanel{width:90px;min-width:90px;}}
+</style>
+</head>
+<body>
+
+<!-- ① START -->
+<div class="screen active" id="s0">
+  <div class="s0-org">강원남부 아동보호전문기관</div>
+  <div class="s0-ico">🪙</div>
+  <div class="s0-ttl">디지털<br>동전가계도</div>
+  <div class="s0-sub">가족과의 관계를 동전으로<br>표현해보세요</div>
+  <button class="btn-start" onclick="goTo('s1')">시작하기</button>
+</div>
+
+<!-- ② INFO -->
+<div class="screen" id="s1">
+  <div class="hdr">
+    <button class="btn-back" onclick="goTo('s0')">←</button>
+    <span class="hdr-title">기본 정보</span>
+    <span class="hdr-step">1 / 3</span>
+  </div>
+  <div class="pg-content">
+    <div class="fg"><label class="fl">아동 이름</label><input class="fi" id="ci-name" type="text" placeholder="이름을 입력하세요"></div>
+    <div class="fg"><label class="fl">나이</label><input class="fi" id="ci-age" type="number" placeholder="나이 (숫자)" min="1" max="20"></div>
+    <div class="fg">
+      <label class="fl">성별</label>
+      <div class="rg">
+        <div class="rb on" id="gm" onclick="selG('남')">👦 남자</div>
+        <div class="rb" id="gf" onclick="selG('여')">👧 여자</div>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">상담일</label><input class="fi" id="ci-date" type="date"></div>
+    <div class="fg"><label class="fl">상담사명</label><input class="fi" id="ci-cnsl" type="text" placeholder="상담사 이름"></div>
+  </div>
+  <div class="btmbar"><button class="btn-p" style="flex:1" onclick="goToFam()">다음 →</button></div>
+</div>
+
+<!-- ③ FAMILY -->
+<div class="screen" id="s2">
+  <div class="hdr">
+    <button class="btn-back" onclick="goTo('s1')">←</button>
+    <span class="hdr-title">가족 구성원 선택</span>
+    <span class="hdr-step">2 / 3</span>
+  </div>
+  <div class="pg-content">
+    <div class="hint">함께 사는 가족을 선택해주세요</div>
+
+    <div class="sec-lbl">부모</div>
+    <div class="family-grid" id="fg-parent"></div>
+
+    <div class="sec-lbl">형제자매 <span style="font-size:11px;color:var(--gd);font-weight:400;">(버튼을 누를수록 추가돼요, 길게 누르면 삭제)</span></div>
+    <div class="family-grid" id="fg-sibling-btns"></div>
+    <div id="fg-sibling-list"></div>
+
+    <div class="sec-lbl">조부모</div>
+    <div class="family-grid" id="fg-grand"></div>
+  </div>
+  <div class="btmbar">
+    <button class="btn-sec" onclick="goTo('s1')">← 수정</button>
+    <button class="btn-p" style="flex:2" onclick="buildGeno()">가계도 생성 →</button>
+  </div>
+</div>
+
+<!-- ④ GENOGRAM -->
+<div class="screen" id="s3">
+  <div class="hdr">
+    <button class="btn-back" onclick="backToFam()">←</button>
+    <span class="hdr-title">동전 배치</span>
+    <span class="hdr-step">3 / 3</span>
+  </div>
+  <div class="gbody">
+    <div class="cpanel" id="cpanel">
+      <div class="cp-ttl">동전</div>
+      <div class="csg" id="csg-500" data-val="500"><div class="csv" id="csv-500"></div><div class="csl">500원</div></div>
+      <div class="csg" id="csg-100" data-val="100"><div class="csv" id="csv-100"></div><div class="csl">100원</div></div>
+      <div class="csg" id="csg-50"  data-val="50" ><div class="csv" id="csv-50" ></div><div class="csl">50원</div></div>
+      <div class="csg" id="csg-10"  data-val="10" ><div class="csv" id="csv-10" ></div><div class="csl">10원</div></div>
+      <div class="cp-hint">끌어서<br>가족에게<br>올려두세요</div>
+    </div>
+    <div class="garea" id="garea">
+      <div class="gcanvas" id="gcanvas">
+        <svg id="gsvg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="drag-hint-lbl" id="drag-hint">동전을 끌어서 가족 위에 올려두세요</div>
+    </div>
+  </div>
+  <div class="btmbar">
+    <button class="btn-sec" onclick="backToFam()">← 구성 수정</button>
+    <button class="btn-p" style="flex:2" onclick="showResult()">결과 보기 →</button>
+  </div>
+</div>
+
+<!-- ⑤ RESULT -->
+<div class="screen" id="s4">
+  <div class="hdr">
+    <button class="btn-back" onclick="goTo('s3')">←</button>
+    <span class="hdr-title">동전가계도 결과</span>
+  </div>
+  <div class="pg-content">
+    <div class="rcap" id="rcap">
+      <div class="rtbar">
+        <div class="rorg">강원남부 아동보호전문기관</div>
+        <div class="rname" id="r-name"></div>
+        <div class="rmeta" id="r-meta"></div>
+      </div>
+      <div id="r-svg" style="margin-bottom:14px;overflow-x:auto;"></div>
+      <table class="rtbl">
+        <thead><tr><th>가족</th><th>배치 동전</th><th>합계</th></tr></thead>
+        <tbody id="r-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="btmbar" style="flex-direction:column;gap:0;">
+    <button class="btn-save" onclick="saveImg()">📷 이미지 저장 (PNG)</button>
+    <button class="btn-edit" onclick="goTo('s3')">← 동전 배치 수정</button>
+    <button class="btn-edit" onclick="backToFam()">← 가족 구성 수정</button>
+    <button class="btn-restart" onclick="restartAll()">🔄 처음부터 다시</button>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+let CI={name:'',age:'',gender:'남',date:'',cnsl:''};
+let selGender='남';
+let members=[];
+let checkedF=new Set();
+// 형제자매: 동적 관리 [{id,label,gender,order}]
+let siblingList=[];
+let siblingCounter=0;
+
+const VALS=[500,100,50,10];
+const CCLS={500:'c500',100:'c100',50:'c50',10:'c10'};
+const CGRAD={
+  500:'radial-gradient(ellipse at 38% 32%,#f8d070,#c8902a,#7a4c08)',
+  100:'radial-gradient(ellipse at 38% 32%,#ececec,#b4b4b4,#787878)',
+   50:'radial-gradient(ellipse at 38% 32%,#f4b860,#cd7f32,#7a3e0a)',
+   10:'radial-gradient(ellipse at 38% 32%,#d8ac44,#9a6a14,#5a3c06)'
+};
+const PARENT_OPTS=[{id:'dad',label:'아빠',gender:'M'},{id:'mom',label:'엄마',gender:'F'}];
+const GRAND_OPTS=[
+  {id:'gf',label:'할아버지',gender:'M'},{id:'gm',label:'할머니',gender:'F'},
+  {id:'mgf',label:'외할아버지',gender:'M'},{id:'mgm',label:'외할머니',gender:'F'}
+];
+
+let DS={active:false,val:null,fromId:null,ghost:null,overId:null,glAdded:false};
+let nodePos={};
+const SQ=40,NGAP=22;
+
+/* ═══════════════════════════════════════
+   NAV
+═══════════════════════════════════════ */
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function backToFam(){
+  // 가족 선택 화면으로 돌아가기 (동전 배치 유지)
+  goTo('s2');
+  renderFamOpts();
+}
+
+/* ═══════════════════════════════════════
+   INFO
+═══════════════════════════════════════ */
+function selG(g){
+  selGender=g;
+  document.getElementById('gm').className='rb'+(g==='남'?' on':'');
+  document.getElementById('gf').className='rb'+(g==='여'?' on':'');
+}
+function goToFam(){
+  CI.name=document.getElementById('ci-name').value.trim()||'아동';
+  CI.age=document.getElementById('ci-age').value||'';
+  CI.gender=selGender;
+  CI.date=document.getElementById('ci-date').value||'';
+  CI.cnsl=document.getElementById('ci-cnsl').value.trim()||'';
+  renderFamOpts();
+  goTo('s2');
+}
+
+/* ═══════════════════════════════════════
+   FAMILY  (형제자매 동적 추가/삭제)
+═══════════════════════════════════════ */
+// 형제자매 6종류 정의
+const SIBL_POOL=[
+  {base:'형',   gender:'M'},
+  {base:'누나', gender:'F'},
+  {base:'오빠', gender:'M'},
+  {base:'언니', gender:'F'},
+  {base:'남동생',gender:'M'},
+  {base:'여동생',gender:'F'},
+];
+// 종류별 카운트 (누를수록 증가)
+let siblCounts={형:0,누나:0,오빠:0,언니:0,남동생:0,여동생:0};
+
+// 버튼 클릭: 해당 종류 +1
+function addSiblingType(base){
+  siblCounts[base]++;
+  syncSiblingList();
+  renderFamOpts();
+}
+// 버튼 길게 누르기: 해당 종류 -1
+function removeSiblingType(base){
+  if(siblCounts[base]>0){ siblCounts[base]--; syncSiblingList(); renderFamOpts(); }
+}
+// siblCounts → siblingList 동기화
+function syncSiblingList(){
+  // 기존 리스트에서 coins 보존
+  const oldCoinsMap={};
+  siblingList.forEach(s=>{ oldCoinsMap[s.id]=s.coins||[]; });
+  siblingCounter=0;
+  siblingList=[];
+  checkedF=new Set([...checkedF].filter(id=>!id.startsWith('sibl_')));
+  // 부모/조부모 선택 복원
+  [...PARENT_OPTS,...GRAND_OPTS].forEach(o=>{ if(oldCheckedStatic.has(o.id)) checkedF.add(o.id); });
+  SIBL_POOL.forEach(pool=>{
+    const cnt=siblCounts[pool.base]||0;
+    for(let i=0;i<cnt;i++){
+      siblingCounter++;
+      const id='sibl_'+siblingCounter;
+      const label=cnt===1?pool.base:pool.base+(i+1);
+      siblingList.push({id,base:pool.base,label,gender:pool.gender,coins:[]});
+      checkedF.add(id);
+    }
+  });
+}
+function removeSibling(id){ /* 미사용 */ }
+
+function renderFamOpts(){
+  // 부모
+  const fpEl=document.getElementById('fg-parent');
+  fpEl.innerHTML='';
+  PARENT_OPTS.forEach(o=>{
+    const ck=checkedF.has(o.id);
+    fpEl.innerHTML+=`<div class="fam-cb ${ck?'on':''}" onclick="toggleFam('${o.id}')">
+      <div class="cb-ico">${ck?'✓':''}</div>
+      <span class="cb-lbl">${o.label}</span>
+      <span class="cb-gen">${o.gender==='M'?'♂':'♀'}</span>
+    </div>`;
+  });
+  // 형제자매 선택 버튼 (항상 표시, 클릭=추가, 길게=삭제)
+  const fsBtns=document.getElementById('fg-sibling-btns');
+  fsBtns.innerHTML='';
+  SIBL_POOL.forEach(pool=>{
+    const cnt=siblCounts[pool.base]||0;
+    const isF=pool.gender==='F';
+    const col=isF?'#9d174d':'#2a5298';
+    const bg=isF?'#fce7f3':'#dbeafe';
+    const bdr=cnt>0?(isF?'#9d174d':'#2a5298'):'var(--gray)';
+    const d=document.createElement('div');
+    d.style.cssText=`position:relative;display:flex;align-items:center;gap:10px;padding:14px;
+      border:2px solid ${bdr};border-radius:var(--r);cursor:pointer;
+      background:${cnt>0?bg:'#fff'};user-select:none;-webkit-user-select:none;`;
+    d.innerHTML=`
+      <div style="width:26px;height:26px;border-radius:6px;border:2.5px solid ${cnt>0?col:'var(--gray)'};
+        display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;
+        background:${cnt>0?col:'transparent'};color:white;">${cnt>0?cnt:''}</div>
+      <span style="font-size:15px;font-weight:600;color:${cnt>0?col:'var(--text)'};">${pool.base}</span>
+      <span style="margin-left:auto;font-size:18px;">${pool.gender==='M'?'♂':'♀'}</span>
+      ${cnt>0?`<div style="position:absolute;bottom:4px;right:8px;font-size:9px;color:var(--gd);">길게누르면삭제</div>`:''}`;
+    d.onclick=()=>addSiblingType(pool.base);
+    // 길게 누르기
+    let lt;
+    d.addEventListener('touchstart',()=>{lt=setTimeout(()=>removeSiblingType(pool.base),600);},{passive:true});
+    d.addEventListener('touchend',()=>clearTimeout(lt),{passive:true});
+    d.addEventListener('mousedown',()=>{lt=setTimeout(()=>removeSiblingType(pool.base),600);});
+    d.addEventListener('mouseup',()=>clearTimeout(lt));
+    fsBtns.appendChild(d);
+  });
+  // 선택된 형제자매 목록 표시
+  const fsList=document.getElementById('fg-sibling-list');
+  fsList.innerHTML='';
+  const sel=siblingList.filter(s=>checkedF.has(s.id));
+  if(sel.length>0){
+    const wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;padding:10px 12px;background:var(--sky);border-radius:10px;';
+    sel.forEach(s=>{
+      const tag=document.createElement('span');
+      tag.style.cssText=`background:${s.gender==='M'?'#2a5298':'#9d174d'};color:#fff;
+        padding:5px 12px;border-radius:20px;font-size:13px;font-weight:700;`;
+      tag.textContent=s.label;
+      wrap.appendChild(tag);
+    });
+    fsList.appendChild(wrap);
+  }
+  // 조부모
+  const fgEl=document.getElementById('fg-grand');
+  fgEl.innerHTML='';
+  GRAND_OPTS.forEach(o=>{
+    const ck=checkedF.has(o.id);
+    fgEl.innerHTML+=`<div class="fam-cb ${ck?'on':''}" onclick="toggleFam('${o.id}')">
+      <div class="cb-ico">${ck?'✓':''}</div>
+      <span class="cb-lbl">${o.label}</span>
+      <span class="cb-gen">${o.gender==='M'?'♂':'♀'}</span>
+    </div>`;
+  });
+}
+
+// 부모/조부모 선택 상태 별도 추적 (sibling 동기화 시 복원용)
+let oldCheckedStatic=new Set();
+function toggleFam(id){
+  if(checkedF.has(id)) checkedF.delete(id);
+  else checkedF.add(id);
+  // static(부모/조부모) 선택 저장
+  oldCheckedStatic=new Set([...checkedF].filter(id=>!id.startsWith('sibl_')));
+  renderFamOpts();
+}
+
+/* ═══════════════════════════════════════
+   BUILD GENOGRAM
+═══════════════════════════════════════ */
+function buildGeno(){
+  // members를 기존 coins 보존하면서 재구성
+  const oldCoins={};
+  members.forEach(m=>{oldCoins[m.id]=m.coins||[];});
+
+  members=[];
+  members.push({id:'self',label:CI.name,gender:CI.gender==='남'?'M':'F',
+    coins:oldCoins['self']||[],isSelf:true});
+
+  PARENT_OPTS.forEach(o=>{
+    if(checkedF.has(o.id)) members.push({id:o.id,label:o.label,gender:o.gender,coins:oldCoins[o.id]||[]});
+  });
+  // 형제자매 자동 번호 계산
+  const bCount={};
+  siblingList.forEach(s=>{bCount[s.base]=(bCount[s.base]||0)+1;});
+  const bIdx={};
+  const dLabels={};
+  siblingList.forEach(s=>{
+    bIdx[s.base]=(bIdx[s.base]||0)+1;
+    dLabels[s.id]=bCount[s.base]===1?s.base:s.base+bIdx[s.base];
+  });
+  // 형제자매 (선택된 것만, base 기준 before-self / after-self)
+  const BEFORE_BASE=['형','누나','오빠','언니'];
+  const AFTER_BASE=['남동생','여동생'];
+  const selSiblings=siblingList.filter(s=>checkedF.has(s.id));
+  const siblB=selSiblings.filter(s=>BEFORE_BASE.includes(s.base));
+  const siblA=selSiblings.filter(s=>AFTER_BASE.includes(s.base));
+  siblB.forEach(s=>members.push({...s,label:dLabels[s.id],coins:oldCoins[s.id]||[]}));
+  // self는 이미 추가됨
+  siblA.forEach(s=>members.push({...s,label:dLabels[s.id],coins:oldCoins[s.id]||[]}));
+
+  GRAND_OPTS.forEach(o=>{
+    if(checkedF.has(o.id)) members.push({id:o.id,label:o.label,gender:o.gender,coins:oldCoins[o.id]||[]});
+  });
+
+  goTo('s3');
+  setTimeout(()=>{
+    buildPanelStacks();
+    renderGeno();
+    if(!DS.glAdded){setupGlobalListeners();DS.glAdded=true;}
+    setupPanelListeners();
+  },60);
+}
+
+/* ─── 패널 동전 스택 시각 ─── */
+function buildPanelStacks(){
+  VALS.forEach(v=>{
+    const vis=document.getElementById('csv-'+v);
+    vis.innerHTML='';
+    const N=5,stepY=6,coinH=19;
+    const totalH=coinH+(N-1)*stepY;
+    vis.style.height=totalH+'px';
+    for(let i=0;i<N;i++){
+      const d=document.createElement('div');
+      d.className='cl '+CCLS[v];
+      d.style.top=((N-1-i)*stepY)+'px';
+      d.style.zIndex=i;
+      vis.appendChild(d);
+    }
+    const lbl=document.createElement('div');
+    lbl.className='cl-lbl';
+    lbl.style.top=(((N-1)*stepY)+(coinH/2)-6)+'px';
+    lbl.textContent=v;
+    vis.appendChild(lbl);
+  });
+}
+
+/* ═══════════════════════════════════════
+   SVG GENOGRAM RENDER
+═══════════════════════════════════════ */
+function renderGeno(){
+  rmOverlays();
+  const svg=document.getElementById('gsvg');
+
+  const gpat=members.filter(m=>['gf','gm'].includes(m.id));
+  const gmat=members.filter(m=>['mgf','mgm'].includes(m.id));
+  const dadM=members.find(m=>m.id==='dad');
+  const momM=members.find(m=>m.id==='mom');
+  const allP=[dadM,momM].filter(Boolean);
+  const selfM=members.find(m=>m.id==='self');
+
+  // 형제자매: self 기준 앞/뒤 분리 (base 속성 기준)
+  const BEFORE_BASE=['형','누나','오빠','언니'];
+  const AFTER_BASE=['남동생','여동생'];
+  const siblB=members.filter(m=>m.base&&BEFORE_BASE.includes(m.base));
+  const siblA=members.filter(m=>m.base&&AFTER_BASE.includes(m.base));
+  const childRow=[...siblB,selfM,...siblA].filter(Boolean);
+
+  const cY=232,pY=144,gY=52;
+  const NW=SQ+NGAP;
+  const svgW=Math.max(childRow.length*NW+48,allP.length*NW*2+48,300);
+  const svgH=cY+SQ+46;
+
+  const pos={};
+  // 자녀 행
+  const cStart=(svgW-childRow.length*NW+NGAP)/2;
+  childRow.forEach((m,i)=>{pos[m.id]={cx:cStart+i*NW+SQ/2,cy:cY+SQ/2,top:cY};});
+  // 부모
+  if(allP.length===2&&pos.self){
+    const mid=pos.self.cx;
+    pos.dad={cx:mid-SQ/2-16,cy:pY+SQ/2,top:pY};
+    pos.mom={cx:mid+SQ/2+16,cy:pY+SQ/2,top:pY};
+  }else if(dadM){pos.dad={cx:svgW/2,cy:pY+SQ/2,top:pY};}
+  else if(momM){pos.mom={cx:svgW/2,cy:pY+SQ/2,top:pY};}
+  // 친조부모
+  if(gpat.length>0){
+    const dc=pos.dad?pos.dad.cx:svgW*0.28;
+    if(gpat.length===2){pos.gf={cx:dc-SQ/2-12,cy:gY+SQ/2,top:gY};pos.gm={cx:dc+SQ/2+12,cy:gY+SQ/2,top:gY};}
+    else pos[gpat[0].id]={cx:dc,cy:gY+SQ/2,top:gY};
+  }
+  // 외조부모
+  if(gmat.length>0){
+    const mc=pos.mom?pos.mom.cx:svgW*0.72;
+    if(gmat.length===2){pos.mgf={cx:mc-SQ/2-12,cy:gY+SQ/2,top:gY};pos.mgm={cx:mc+SQ/2+12,cy:gY+SQ/2,top:gY};}
+    else pos[gmat[0].id]={cx:mc,cy:gY+SQ/2,top:gY};
+  }
+
+  const ln=(x1,y1,x2,y2,c='#a0aec0',w=2)=>
+    `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}"/>`;
+  let L='',N2='';
+
+  // 선
+  if(gpat.length===2&&pos.gf&&pos.gm&&pos.dad){
+    const mx=(pos.gf.cx+pos.gm.cx)/2;
+    L+=ln(pos.gf.cx+SQ/2,pos.gf.cy,pos.gm.cx-SQ/2,pos.gm.cy);
+    L+=ln(mx,pos.gf.cy,pos.dad.cx,pos.dad.top);
+  }else if(gpat.length===1&&pos[gpat[0].id]&&pos.dad){
+    const g=pos[gpat[0].id];L+=ln(g.cx,g.top+SQ,pos.dad.cx,pos.dad.top);
+  }
+  if(gmat.length===2&&pos.mgf&&pos.mgm&&pos.mom){
+    const mx=(pos.mgf.cx+pos.mgm.cx)/2;
+    L+=ln(pos.mgf.cx+SQ/2,pos.mgf.cy,pos.mgm.cx-SQ/2,pos.mgm.cy);
+    L+=ln(mx,pos.mgf.cy,pos.mom.cx,pos.mom.top);
+  }else if(gmat.length===1&&pos[gmat[0].id]&&pos.mom){
+    const g=pos[gmat[0].id];L+=ln(g.cx,g.top+SQ,pos.mom.cx,pos.mom.top);
+  }
+  if(pos.dad&&pos.mom) L+=ln(pos.dad.cx+SQ/2,pos.dad.cy,pos.mom.cx-SQ/2,pos.mom.cy,'#6b7a8d',2.5);
+  const pA=pos.dad&&pos.mom?(pos.dad.cx+pos.mom.cx)/2:pos.dad?pos.dad.cx:pos.mom?pos.mom.cx:null;
+  if(pA&&childRow.length>0){
+    const pBot=pY+SQ,midY=(pBot+cY)/2;
+    const fc=pos[childRow[0].id].cx,lc=pos[childRow[childRow.length-1].id].cx;
+    L+=ln(pA,pBot,pA,midY,'#6b7a8d',2.5);
+    L+=ln(fc,midY,lc,midY,'#6b7a8d',2.5);
+    childRow.forEach(m=>{L+=ln(pos[m.id].cx,midY,pos[m.id].cx,cY,'#6b7a8d',2.5);});
+    const mx=(fc+lc)/2;if(Math.abs(mx-pA)>4)L+=ln(pA,midY,mx,midY,'#6b7a8d',2.5);
+  }
+
+  // 노드
+  members.forEach(m=>{
+    const p=pos[m.id];if(!p)return;
+    const sc=m.isSelf?'#d97706':m.gender==='M'?'#2a5298':'#9d174d';
+    const fc=m.isSelf?'#fef3c7':m.gender==='M'?'#dbeafe':'#fce7f3';
+    const tot=(m.coins||[]).reduce((s,c)=>s+c,0);
+    if(m.gender==='M'){
+      N2+=`<rect id="sh-${m.id}" x="${p.cx-SQ/2}" y="${p.top}" width="${SQ}" height="${SQ}" rx="6" fill="${fc}" stroke="${sc}" stroke-width="2.5"/>`;
+      if(m.isSelf)N2+=`<rect x="${p.cx-SQ/2+5}" y="${p.top+5}" width="${SQ-10}" height="${SQ-10}" rx="3" fill="none" stroke="${sc}" stroke-width="1.5"/>`;
+    }else{
+      N2+=`<circle id="sh-${m.id}" cx="${p.cx}" cy="${p.top+SQ/2}" r="${SQ/2}" fill="${fc}" stroke="${sc}" stroke-width="2.5"/>`;
+      if(m.isSelf)N2+=`<circle cx="${p.cx}" cy="${p.top+SQ/2}" r="${SQ/2-5}" fill="none" stroke="${sc}" stroke-width="1.5"/>`;
+    }
+    N2+=`<text x="${p.cx}" y="${p.top+SQ+14}" text-anchor="middle" font-size="11" font-weight="700" fill="${sc}">${m.label}</text>`;
+    if(tot>0)N2+=`<text x="${p.cx}" y="${p.top+SQ+27}" text-anchor="middle" font-size="10" fill="#2a5298" font-weight="700">${tot.toLocaleString()}원</text>`;
+    N2+=`<rect id="hit-${m.id}" x="${p.cx-SQ/2-10}" y="${p.top-10}" width="${SQ+20}" height="${SQ+20}" fill="transparent" rx="10"/>`;
+  });
+
+  svg.setAttribute('viewBox',`0 0 ${svgW} ${svgH}`);
+  svg.style.width=svgW+'px';svg.style.height=svgH+'px';
+  svg.innerHTML=L+N2;
+  nodePos={};
+  members.forEach(m=>{if(pos[m.id])nodePos[m.id]={...pos[m.id]};});
+  placeOverlays();
+  updHint();
+}
+
+/* ═══════════════════════════════════════
+   COIN OVERLAYS
+═══════════════════════════════════════ */
+function rmOverlays(){document.querySelectorAll('.ncov').forEach(e=>e.remove());}
+
+function placeOverlays(){
+  rmOverlays();
+  const svg=document.getElementById('gsvg');
+  const can=document.getElementById('gcanvas');
+  const sr=svg.getBoundingClientRect();
+  const cr=can.getBoundingClientRect();
+  const vb=svg.viewBox.baseVal;
+  if(!vb||vb.width===0)return;
+  const sx=sr.width/vb.width,sy=sr.height/vb.height;
+  members.forEach(m=>{
+    const p=nodePos[m.id];
+    if(!p||!m.coins||m.coins.length===0)return;
+    const npx=sr.left-cr.left+(p.cx-SQ/2)*sx;
+    const npy=sr.top-cr.top+p.top*sy;
+    makeCoinOverlay(m,npx,npy,can);
+  });
+}
+
+function makeCoinOverlay(m,npx,npy,can){
+  const counts={};
+  m.coins.forEach(v=>{counts[v]=(counts[v]||0)+1;});
+  const wrap=document.createElement('div');
+  wrap.className='ncov';
+  wrap.id='ov-'+m.id;
+  wrap.style.cssText=`left:${npx-24}px;top:${npy-8}px;`;
+  VALS.forEach(v=>{
+    if(!counts[v])return;
+    const cnt=counts[v];
+    const coinH=16,step=5;
+    const stackH=coinH+(cnt-1)*step+8;
+    const sg=document.createElement('div');
+    sg.className='ncstack';
+    sg.setAttribute('data-sid',m.id);
+    sg.setAttribute('data-sv',v);
+    sg.style.cssText=`width:42px;height:${stackH}px;margin-bottom:2px;`;
+    const show=Math.min(cnt,10);
+    for(let i=0;i<show;i++){
+      const d=document.createElement('div');
+      d.style.cssText=`position:absolute;width:42px;height:${coinH}px;border-radius:50%;
+        background:${CGRAD[v]};border:1.5px solid rgba(255,255,255,.25);
+        top:${(show-1-i)*step}px;z-index:${i};box-shadow:0 1px 3px rgba(0,0,0,.28);`;
+      sg.appendChild(d);
+    }
+    const badge=document.createElement('div');
+    badge.style.cssText=`position:absolute;top:-5px;right:-3px;background:var(--navy);
+      color:#fff;font-size:8px;font-weight:900;border-radius:50%;width:14px;height:14px;
+      display:flex;align-items:center;justify-content:center;z-index:30;border:1.5px solid #fff;`;
+    badge.textContent=cnt>99?'99+':cnt;
+    sg.appendChild(badge);
+    const lbl=document.createElement('div');
+    lbl.style.cssText=`position:absolute;left:0;width:42px;text-align:center;
+      font-size:9px;font-weight:900;color:rgba(255,255,255,.9);
+      top:${(show-1)*step+(coinH/2)-5}px;z-index:25;
+      text-shadow:0 1px 2px rgba(0,0,0,.5);pointer-events:none;`;
+    lbl.textContent=v;
+    sg.appendChild(lbl);
+    sg.addEventListener('mousedown',e=>{e.stopPropagation();fromOverlay(e,m.id,v);});
+    sg.addEventListener('touchstart',e=>{e.stopPropagation();fromOverlay(e,m.id,v);},{passive:false});
+    wrap.appendChild(sg);
+  });
+  can.appendChild(wrap);
+}
+
+/* ═══════════════════════════════════════
+   DRAG & DROP
+═══════════════════════════════════════ */
+function setupGlobalListeners(){
+  document.addEventListener('mousemove',onMv);
+  document.addEventListener('mouseup',onEnd);
+  document.addEventListener('touchmove',onMv,{passive:false});
+  document.addEventListener('touchend',onEnd,{passive:false});
+}
+function setupPanelListeners(){
+  VALS.forEach(v=>{
+    const el=document.getElementById('csg-'+v);
+    if(!el)return;
+    el.onmousedown=e=>{e.preventDefault();fromPanel(e,v);};
+    el.ontouchstart=e=>{e.preventDefault();fromPanel(e,v);};
+  });
+}
+function fromPanel(e,v){
+  const pt=xy(e);mkGhost(v,pt);
+  DS={...DS,active:true,val:v,fromId:null,overId:null};
+}
+function fromOverlay(e,mid,v){
+  e.preventDefault();
+  const pt=xy(e);
+  const m=members.find(x=>x.id===mid);
+  if(!m)return;
+  const idx=m.coins.lastIndexOf(v);
+  if(idx===-1)return;
+  m.coins.splice(idx,1);
+  mkGhost(v,pt);
+  DS={...DS,active:true,val:v,fromId:mid,overId:null};
+  placeOverlays();bindOv();
+}
+function mkGhost(v,pt){
+  if(DS.ghost){DS.ghost.remove();DS.ghost=null;}
+  const g=document.createElement('div');
+  g.className='drag-ghost '+CCLS[v];
+  g.textContent=v;
+  g.style.left=pt.x+'px';g.style.top=pt.y+'px';
+  document.body.appendChild(g);DS.ghost=g;
+}
+function onMv(e){
+  if(!DS.active)return;e.preventDefault();
+  const pt=xy(e);
+  if(DS.ghost){DS.ghost.style.left=pt.x+'px';DS.ghost.style.top=pt.y+'px';}
+  const ov=nodeAt(pt.x,pt.y);
+  if(ov!==DS.overId){
+    if(DS.overId){const s=document.getElementById('sh-'+DS.overId);if(s)s.classList.remove('node-glow');}
+    DS.overId=ov;
+    if(ov){const s=document.getElementById('sh-'+ov);if(s)s.classList.add('node-glow');}
+  }
+}
+function onEnd(e){
+  if(!DS.active)return;e.preventDefault();
+  DS.active=false;
+  if(DS.overId){const s=document.getElementById('sh-'+DS.overId);if(s)s.classList.remove('node-glow');}
+  if(DS.ghost){DS.ghost.remove();DS.ghost=null;}
+  const tgt=DS.overId;
+  if(tgt){
+    const m=members.find(x=>x.id===tgt);
+    if(m)m.coins.push(DS.val);
+  }else if(DS.fromId){
+    const m=members.find(x=>x.id===DS.fromId);
+    if(m)m.coins.push(DS.val);
+  }
+  DS.fromId=null;DS.overId=null;
+  renderGeno();
+}
+function xy(e){
+  if(e.touches&&e.touches[0])return{x:e.touches[0].clientX,y:e.touches[0].clientY};
+  if(e.changedTouches&&e.changedTouches[0])return{x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY};
+  return{x:e.clientX,y:e.clientY};
+}
+function nodeAt(px,py){
+  const svg=document.getElementById('gsvg');
+  const r=svg.getBoundingClientRect();
+  const vb=svg.viewBox.baseVal;
+  if(!vb||vb.width===0)return null;
+  const sx=r.width/vb.width,sy=r.height/vb.height;
+  for(const[id,p]of Object.entries(nodePos)){
+    const cx=r.left+p.cx*sx,cy=r.top+p.cy*sy;
+    const rad=(SQ/2+14)*Math.min(sx,sy);
+    if((px-cx)**2+(py-cy)**2<rad**2)return id;
+  }
+  return null;
+}
+function bindOv(){
+  document.querySelectorAll('.ncstack').forEach(el=>{
+    el.onmousedown=e=>{e.stopPropagation();fromOverlay(e,el.dataset.sid,parseInt(el.dataset.sv));};
+    el.ontouchstart=e=>{e.stopPropagation();fromOverlay(e,el.dataset.sid,parseInt(el.dataset.sv));};
+  });
+}
+function updHint(){
+  const any=members.some(m=>m.coins&&m.coins.length>0);
+  const h=document.getElementById('drag-hint');
+  if(h)h.style.opacity=any?'0':'1';
+}
+
+/* ═══════════════════════════════════════
+   RESULT
+═══════════════════════════════════════ */
+function showResult(){
+  const svg=document.getElementById('gsvg');
+  document.getElementById('r-svg').innerHTML=
+    `<div style="background:#fff;padding:8px;border-radius:8px;overflow-x:auto;">${svg.outerHTML}</div>`;
+  document.getElementById('r-name').textContent=
+    `${CI.name} (${CI.gender==='남'?'남':'여'}, ${CI.age}세)`;
+  const d=CI.date?CI.date.replace(/-/g,'.'):'';
+  document.getElementById('r-meta').textContent=`상담일: ${d}　상담사: ${CI.cnsl}`;
+  const tb=document.getElementById('r-tbody');tb.innerHTML='';
+  const placed=members.filter(m=>m.coins&&m.coins.length>0);
+  if(!placed.length){tb.innerHTML='<tr><td colspan="3" style="text-align:center;color:#999;padding:20px;">배치된 동전이 없어요</td></tr>';}
+  else placed.forEach(m=>{
+    const tot=m.coins.reduce((s,c)=>s+c,0);
+    const chips=m.coins.map(c=>`<span class="chip r${c}">${c}</span>`).join('');
+    tb.innerHTML+=`<tr><td><b>${m.label}</b></td><td><div class="chips">${chips}</div></td><td class="ra">${tot.toLocaleString()}원</td></tr>`;
+  });
+  goTo('s4');
+}
+
+/* ═══════════════════════════════════════
+   SAVE IMAGE (오프라인: 내장 라이브러리 사용)
+═══════════════════════════════════════ */
+function b64Blob(d){
+  const a=d.split(','),mt=a[0].match(/:(.*?);/)[1],bs=atob(a[1]);
+  let n=bs.length;const u=new Uint8Array(n);while(n--)u[n]=bs.charCodeAt(n);
+  return new Blob([u],{type:mt});
+}
+async function saveImg(){
+  const t=document.getElementById('rcap');
+  const b=document.querySelector('.btn-save');
+  const orig=b.innerHTML;b.innerHTML='⏳ 생성 중...';b.disabled=true;
+  try{
+    if(typeof htmlToImage==='undefined'){
+      alert('이미지 저장 기능을 사용하려면 최초 1회 인터넷 연결이 필요합니다.\n연결 후 다시 시도해주세요.');
+      return;
+    }
+    const ua=navigator.userAgent||'';
+    const isIOS=/iPhone|iPad|iPod/i.test(ua);
+    const fn=`동전가계도_${CI.name}_${CI.date||'결과'}.png`;
+    const du=await htmlToImage.toPng(t,{backgroundColor:'#ffffff',pixelRatio:2,cacheBust:true});
+    if(isIOS){
+      const fl=new File([b64Blob(du)],fn,{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[fl]})){await navigator.share({files:[fl],title:'동전가계도'});}
+      else{const w=window.open();if(w)w.document.write(`<html><body style="margin:0;background:#111;display:flex;flex-direction:column;align-items:center;padding:16px;"><p style="color:#fff;font-size:14px;margin-bottom:12px;">이미지를 <b>길게 눌러</b> 저장하세요</p><img src="${du}" style="max-width:100%;border-radius:8px;"></body></html>`);else alert('스크린샷으로 저장해주세요.');}
+    }else{
+      const url=URL.createObjectURL(b64Blob(du)),a=document.createElement('a');
+      a.href=url;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),3000);
+    }
+  }catch(e){
+    // 오프라인 대비: canvas 방식 시도
+    tryCanvasSave(t);
+  }finally{b.innerHTML=orig;b.disabled=false;}
+}
+function tryCanvasSave(el){
+  // SVG를 직접 이미지로 변환 (오프라인 폴백)
+  const svg=document.getElementById('gsvg');
+  const ser=new XMLSerializer();
+  const svgStr=ser.serializeToString(svg);
+  const blob=new Blob([svgStr],{type:'image/svg+xml'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`동전가계도_${CI.name}.svg`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),3000);
+  alert('오프라인 상태: 가계도를 SVG 파일로 저장했습니다.\nPNG 저장은 인터넷 연결 시 가능합니다.');
+}
+
+function restartAll(){
+  if(!confirm('처음부터 다시 시작할까요? 모든 데이터가 초기화됩니다.'))return;
+  checkedF.clear();members=[];siblingList=[];siblingCounter=0;siblCounts={형:0,누나:0,오빠:0,언니:0,남동생:0,여동생:0};oldCheckedStatic=new Set();
+  CI={name:'',age:'',gender:'남',date:'',cnsl:''};selGender='남';
+  ['ci-name','ci-age','ci-cnsl'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  selG('남');DS.glAdded=false;
+  goTo('s0');
+}
+
+/* INIT */
+document.getElementById('ci-date').value=new Date().toISOString().split('T')[0];
+renderFamOpts();
+</script>
+<!-- html-to-image 라이브러리 (오프라인 사용 불가 시 폴백 처리) -->
+<script>
+// 오프라인 환경 대비: 비동기 로드, 실패해도 앱은 정상 동작
+(function(){
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js';
+  s.onerror=()=>console.warn('html-to-image 로드 실패 - 오프라인 모드. SVG 저장으로 대체됩니다.');
+  document.head.appendChild(s);
+})();
+</script>
+</body>
+</html>
